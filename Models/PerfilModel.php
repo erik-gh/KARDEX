@@ -1,0 +1,171 @@
+<?php 
+
+/**
+* 
+*/
+class PerfilModel extends Mysql
+{
+	//CONSULTAS A LA BD, PARA RETORNAR AL CONTROLADOR 
+
+	private $intIdPerfil;
+	private $strPerfil;
+	private $strDescripcion;
+	private $intUserSession;
+	private $intEstado;
+
+
+	public function __construct()
+	{
+		# code...
+		parent::__construct();
+	}
+
+
+	public function insertPerfil(string $perfil, string $descripcion, int $userSession)
+	{
+		
+		$this->strPerfil 		= $perfil;
+		$this->strDescripcion	= $descripcion;
+		$this->intUserSession 	= $userSession;
+
+		$queryPerfil = "SELECT id_perfil FROM perfil WHERE perfil = '{$this->strPerfil}' AND estado != 0 ";
+		$requestPerfil = $this->select($queryPerfil);
+
+		if(empty($requestPerfil)){
+			
+			$query = "INSERT INTO perfil(perfil, descripcion, user_create, estado) VALUES(?,?,?,1)";
+			$arrData = array($this->strPerfil, $this->strDescripcion, $this->intUserSession);
+			$requestInsert = $this->insert($query, $arrData);
+			
+			return $requestInsert;
+
+		}else{
+
+			return  'exist';
+		}
+	}
+
+
+	public function selectPerfiles()
+	{
+
+		$query = "SELECT id_perfil, perfil, descripcion, estado FROM perfil WHERE estado != 0 ";
+		if(isset($_POST["search"]["value"]))
+		{
+		 	$query .= "AND ( perfil LIKE '%".$_POST["search"]["value"]."%' ";
+		    $query .= "OR descripcion LIKE '%".$_POST["search"]["value"]."%' )";
+		}
+
+		if(isset($_POST["order"]))
+		{
+			$query .= ' ORDER BY '.(1+$_POST['order']['0']['column']).' '.$_POST['order']['0']['dir'].' ';
+		}
+		else
+		{
+			$query .= ' ORDER BY perfil ';
+		}
+
+		if ( isset( $_POST['start'] ) && $_POST['length'] != '-1' )
+		{
+			$query .= " LIMIT ".$_POST['start'].", ".$_POST['length'];
+		}
+		$request = $this->select_all($query);
+	
+
+		$query = "SELECT COUNT(*) as row FROM perfil WHERE estado != 0 ";
+		if(isset($_POST["search"]["value"]))
+		{
+		 	$query .= "AND ( perfil LIKE '%".$_POST["search"]["value"]."%' ";
+		    $query .= "OR descripcion LIKE '%".$_POST["search"]["value"]."%' )";
+		}
+		$request2 = $this->select($query);
+
+		
+		$query = "SELECT COUNT(*) as row FROM perfil WHERE estado != 0";
+		$request3 = $this->select($query);
+
+		$requestData=[$request,$request2,$request3];
+
+		return $requestData;
+	}
+
+
+	public function selectPerfil(int $idPerfil)
+	{
+		$this->intIdPerfil 	= $idPerfil;
+		$query = "SELECT * FROM perfil WHERE id_perfil = $this->intIdPerfil";
+		$request = $this->select($query);
+		return $request;
+	}
+
+
+	public function updatePerfil(int $idPerfil, string $perfil, string $descripcion, int $userSession, int $estado)
+	{
+
+		$this->intIdPerfil 		= $idPerfil;
+		$this->strPerfil 		= $perfil;
+		$this->strDescripcion	= $descripcion;
+		$this->intUserSession 	= $userSession;
+		$this->intEstado 		= $estado;
+
+		$queryPerfil = "SELECT * FROM perfil WHERE perfil = '{$this->strPerfil}' AND id_perfil != $this->intIdPerfil AND estado != 0 ";
+		$requestPerfil = $this->select($queryPerfil);
+
+		if(empty($requestPerfil)){
+			
+			$query = "UPDATE perfil SET perfil = ?, descripcion = ?, user_update = ?, estado = ? WHERE id_perfil = $this->intIdPerfil";
+			$arrData = array($this->strPerfil, $this->strDescripcion, $this->intUserSession, $this->intEstado);
+			$request = $this->update($query, $arrData);
+
+			$queryUpdUser = "UPDATE usuario SET estado = ? WHERE id_perfil = $this->intIdPerfil";
+			$arrDataUpd = array($this->intEstado);
+			$requestUpd = $this->update($queryUpdUser, $arrDataUpd);
+			
+			return $request;
+
+		}else{
+			
+			return  'exist';
+
+		}
+	}
+
+
+	public function deletePerfil(int $idPerfil)
+	{
+		$this->intIdPerfil 	=  $idPerfil;
+		
+		$queryUser 	= "SELECT id_usuario FROM usuario WHERE id_perfil = $this->intIdPerfil AND estado != 0 ";
+		$requestUser = $this->select($queryUser);
+
+		if(empty($requestUser)){
+			$query 	= "UPDATE perfil SET estado = ? WHERE id_perfil = $this->intIdPerfil ";
+			$arrData= array(0);
+			$request = $this->update($query, $arrData);
+			
+			return $request;
+		}else{
+
+			return  'exist';
+		}
+	}
+
+
+	public function selectCboPerfiles(){
+		$query = "SELECT * FROM perfil WHERE estado = 1 ORDER BY perfil";
+		$request = $this->select_all($query);
+		return $request;
+	}
+
+
+	public function selectCboPerfilesModulo(){
+		$query = "SELECT * FROM perfil WHERE estado = 1 AND id_perfil NOT IN (SELECT DISTINCT id_perfil FROM perfil_modulo) ORDER BY perfil";
+		$request = $this->select_all($query);
+		return $request;
+	}
+
+
+}
+
+
+?>

@@ -1,0 +1,17 @@
+SELECT t1.dni, t1.nombre, c.cargo, ed.observacion
+					from estado_detalle ed 
+					RIGHT JOIN  (select * 
+					from personal p
+					where p.estado = 1 and p.id_gerencia = 1 and p.id_responsable = 1 
+					and p.id_personal not in (
+					                            select p.id_personal
+					                            from asistencia ast 
+					                            inner join personal p on p.id_personal = ast.id_personal
+					                            inner join cargo c on c.id_cargo= ast.id_cargo
+					                            WHERE p.id_responsable = 1 and p.estado = 1 and fecha = '2021-04-20' )
+					) T1 ON T1.id_personal = ed.idPersonal
+                    
+					LEFT join estado e on ed.IdEstado = e.IdEstado
+                    inner join cargo c on c.id_cargo = T1.id_cargo
+                    where e.IdEstado = 3
+              
