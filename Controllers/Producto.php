@@ -239,8 +239,6 @@
 			// dep($arrData[0][0]['estado']);
 		}
 
-
-
 		public function setProyecto()
 		{
 			if($_POST){

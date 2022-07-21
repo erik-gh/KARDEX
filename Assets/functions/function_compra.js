@@ -367,7 +367,6 @@ $("#form_registrarCompra").submit(function() {
 	
 
 	console.log("Datos a enviar: datosIngreso:"+datosIngreso);
-
     
         $.ajax({
         	url: base_url+'/Compra/setCompraAdqui',
